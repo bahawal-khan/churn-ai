@@ -1,7 +1,10 @@
 # Environment / secrets
 .env
 .env.*
-!.env.example
+# Template/example files carry no secrets and should be committed so a new
+# clone has the documented variable list — `!.env.example` alone didn't match
+# `frontend/.env.local.example` (Phase 11 hygiene check, `PROJECT_SPEC.md` §31).
+!.env*.example
 
 # Python
 __pycache__/

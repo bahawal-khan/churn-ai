@@ -6,10 +6,17 @@ blueprints.
 
 Phase 9: adds the remaining blueprints from `docs/BACKEND_SPEC.md` §2 —
 `datasets`, `training`, `customers`, `analytics`, `reports` — completing the
-route-group list. CORS and rate limiting (`docs/BACKEND_SPEC.md` §9) remain
-out of scope here (deferred to Phase 11 Integration/Security hardening,
-`docs/PROJECT_SPEC.md` §33) since neither is needed for route/service
-correctness in a phase with no frontend calling cross-origin yet.
+route-group list. CORS and rate limiting (`docs/BACKEND_SPEC.md` §9) remained
+out of scope in that phase (deferred to Phase 11 Integration/Security
+hardening, `docs/PROJECT_SPEC.md` §33) since neither was needed for
+route/service correctness before a frontend called cross-origin.
+
+Phase 11: wires both up. CORS is an explicit allow-list read from
+`Config.CORS_ALLOWED_ORIGINS` (`docs/DEPLOYMENT.md` §2-3) — never a wildcard,
+`supports_credentials=True` since auth uses a session cookie. Rate limiting
+(`backend/rate_limit.py`) is applied blueprint-wide to `auth`, `training`,
+and `predictions` — the three groups `docs/BACKEND_SPEC.md` §9 calls out as
+credential-stuffing/resource-exhaustion targets.
 """
 
 from __future__ import annotations
@@ -18,10 +25,12 @@ import logging
 import uuid
 
 from flask import Flask, g
+from flask_cors import CORS
 
 from backend.config import Config
 from backend.db import session as db_session
 from backend.errors import register_error_handlers
+from backend.rate_limit import auth_rate_limit, limiter, prediction_rate_limit, training_rate_limit
 from backend.routes.analytics import analytics_bp
 from backend.routes.auth import auth_bp
 from backend.routes.customers import customers_bp
@@ -48,6 +57,11 @@ def create_app(config_object: type[Config] = Config) -> Flask:
     register_error_handlers(app)
     db_session.init_app(app)
 
+    origins = [o.strip() for o in app.config["CORS_ALLOWED_ORIGINS"].split(",") if o.strip()]
+    CORS(app, resources={r"/api/*": {"origins": origins}}, supports_credentials=True)
+
+    limiter.init_app(app)
+
     app.register_blueprint(health_bp, url_prefix="/api/health")
     app.register_blueprint(auth_bp, url_prefix="/api/auth")
     app.register_blueprint(models_bp, url_prefix="/api/models")
@@ -57,6 +71,14 @@ def create_app(config_object: type[Config] = Config) -> Flask:
     app.register_blueprint(customers_bp, url_prefix="/api/customers")
     app.register_blueprint(analytics_bp, url_prefix="/api/analytics")
     app.register_blueprint(reports_bp, url_prefix="/api/reports")
+
+    # Blueprint-wide limits (`docs/BACKEND_SPEC.md` §9): applied after
+    # registration since Flask-Limiter needs the blueprint's endpoints to
+    # already exist on the app. Read from config via a callable so limits are
+    # configurable per environment without a code change.
+    limiter.limit(auth_rate_limit)(auth_bp)
+    limiter.limit(training_rate_limit)(training_bp)
+    limiter.limit(prediction_rate_limit)(predictions_bp)
 
     return app
 

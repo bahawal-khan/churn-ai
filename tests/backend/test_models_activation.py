@@ -7,6 +7,8 @@ exercises end-to-end) to keep these ownership/exclusivity checks fast.
 
 from __future__ import annotations
 
+import uuid
+
 from backend.db.models import Model, User
 
 
@@ -49,7 +51,11 @@ def _seed_dataset(db, organization_id: int) -> int:
     dataset = Dataset(
         organization_id=organization_id,
         original_filename="test.csv",
-        storage_path=f"/tmp/test-{organization_id}-{id(db)}.csv",
+        # A real unique token, not `id(db)` (`storage_path` has a UNIQUE
+        # constraint, `DATABASE_SPEC.md` §2.5 — a freed session's memory
+        # address can be reused by a later session in the same process,
+        # colliding two calls in the same test and failing the insert).
+        storage_path=f"/tmp/test-{organization_id}-{uuid.uuid4()}.csv",
         source_type="company_upload",
         row_count=1,
         column_schema=[],

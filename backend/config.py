@@ -64,9 +64,34 @@ class Config:
         os.environ.get("CHURNAI_REPORTS_DIR", str(_BACKEND_DIR / "storage" / "reports"))
     )
 
+    # Phase 11 (`docs/DEPLOYMENT.md` §2-3, `docs/BACKEND_SPEC.md` §9): exact
+    # env var name pinned in DEPLOYMENT.md — comma-separated allow-list, never
+    # a wildcard. Defaults to local dev only; production sets this to the
+    # real Vercel domain(s) via env var, no code change required.
+    CORS_ALLOWED_ORIGINS = os.environ.get("CORS_ALLOWED_ORIGINS", "http://localhost:3000")
+
+    # Phase 11 (`docs/BACKEND_SPEC.md` §9): Flask-Limiter, in-process/memory
+    # storage — suitable for the free-tier single-worker deployment target
+    # (`docs/DEPLOYMENT.md` §1), documented upgrade path to a shared/Redis
+    # backend if the app ever scales beyond one worker. Limit strings use
+    # Flask-Limiter's own syntax (e.g. "20 per minute") and are read fresh
+    # per-request via a callable, so they're configurable without a restart
+    # surviving a code change.
+    RATELIMIT_ENABLED = os.environ.get("CHURNAI_RATE_LIMIT_ENABLED", "true").lower() == "true"
+    RATELIMIT_STORAGE_URI = os.environ.get("CHURNAI_RATE_LIMIT_STORAGE_URI", "memory://")
+    RATE_LIMIT_AUTH = os.environ.get("CHURNAI_RATE_LIMIT_AUTH", "20 per minute")
+    RATE_LIMIT_TRAINING = os.environ.get("CHURNAI_RATE_LIMIT_TRAINING", "10 per minute")
+    RATE_LIMIT_PREDICTION = os.environ.get("CHURNAI_RATE_LIMIT_PREDICTION", "60 per minute")
+
 
 class TestConfig(Config):
     TESTING = True
     ENV = "testing"
     DEBUG = False
     SESSION_COOKIE_SECURE = False
+    # Rate limiting is real production behavior (`BACKEND_SPEC.md` §9) but
+    # would make the rest of the suite flaky — most tests fire many requests
+    # from the same test-client "IP" in a tight loop. Disabled by default
+    # here so existing Phase 7-10 tests stay deterministic; `test_rate_limiting.py`
+    # opts back in per-app via its own config subclass.
+    RATELIMIT_ENABLED = False
