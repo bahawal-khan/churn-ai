@@ -1,0 +1,68 @@
+{
+  "row_count": 21043,
+  "engineered_columns": [
+    "active_addon_count",
+    "avg_monthly_value",
+    "has_internet",
+    "has_protection_addon",
+    "has_streaming_addon",
+    "contract_risk_flag",
+    "payment_risk_flag",
+    "family_flag",
+    "tenure_group"
+  ],
+  "tenure_group_distribution": {
+    "25-48": 7116,
+    "0-12": 5076,
+    "49+": 4511,
+    "13-24": 4340
+  },
+  "has_internet_rate": 0.7477,
+  "active_addon_count_distribution": {
+    "0": 7576,
+    "1": 3348,
+    "2": 3601,
+    "3": 3088,
+    "4": 2008,
+    "5": 1063,
+    "6": 359
+  },
+  "has_protection_addon_rate": 0.4858,
+  "has_streaming_addon_rate": 0.4564,
+  "avg_monthly_value_stats": {
+    "mean": 60.41,
+    "std": 25.47,
+    "min": 0.0,
+    "max": 123.48
+  },
+  "contract_risk_flag_rate": 0.5314,
+  "payment_risk_flag_rate": 0.341,
+  "family_flag_rate": 0.596,
+  "engineered_columns_null_count": 0,
+  "churn_rate_by_tenure_group": {
+    "0-12": 0.5144,
+    "13-24": 0.3767,
+    "25-48": 0.2341,
+    "49+": 0.1097
+  },
+  "churn_rate_by_has_protection_addon": {
+    "False": 0.3687,
+    "True": 0.2365
+  },
+  "churn_rate_by_has_streaming_addon": {
+    "False": 0.305,
+    "True": 0.3039
+  },
+  "churn_rate_by_contract_risk_flag": {
+    "False": 0.1355,
+    "True": 0.4535
+  },
+  "churn_rate_by_payment_risk_flag": {
+    "False": 0.2395,
+    "True": 0.43
+  },
+  "churn_rate_by_family_flag": {
+    "False": 0.4257,
+    "True": 0.2223
+  }
+}
