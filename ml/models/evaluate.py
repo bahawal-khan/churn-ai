@@ -12,6 +12,16 @@ validation-set probabilities — this module has no knowledge of which split
 a given `y_true`/`y_prob` pair came from, so the "validation only" rule
 (ML_SPEC §12, PROJECT_SPEC binding rule) is enforced by the caller, not
 here. See `ml/models/train.py` for where that boundary is actually held.
+
+`matplotlib` is imported lazily, inside each `plot_*` function, rather than
+at module scope (Phase 12 deployment finding, same pattern as
+`ml/models/ann.py`'s tensorflow fix): `compute_metric_suite` and
+`select_threshold_by_f1` — the only two functions this module exports to
+`backend/services/training_service.py`'s production training path — never
+touch `plt`, so the backend shouldn't have to carry matplotlib/Pillow/
+fontTools (~69 MB) just to boot on a disk-constrained host. The `plot_*`
+functions (dev/EDA figure generation, never called from `backend/`) are
+unchanged in behavior when matplotlib is installed.
 """
 
 from __future__ import annotations
@@ -20,10 +30,6 @@ import json
 from pathlib import Path
 from typing import Any
 
-import matplotlib
-
-matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 import numpy as np
 from sklearn.calibration import calibration_curve
 from sklearn.metrics import (
@@ -89,6 +95,11 @@ def select_threshold_by_f1(y_true: np.ndarray, y_prob: np.ndarray) -> tuple[floa
 
 
 def plot_confusion_matrix(cm: list[list[int]], title: str, path: Path) -> None:
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     cm_arr = np.array(cm)
     fig, ax = plt.subplots(figsize=(4, 4))
     im = ax.imshow(cm_arr, cmap="Blues")
@@ -112,6 +123,11 @@ def plot_roc_pr_curves(results: dict[str, dict[str, np.ndarray]], path: Path) ->
     """`results`: {model_label: {"y_true": arr, "y_prob": arr}} — overlays
     every model's ROC and PR curve on validation data for a single
     side-by-side comparison figure."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     fig, (ax_roc, ax_pr) = plt.subplots(1, 2, figsize=(11, 5))
     for label, data in results.items():
         y_true, y_prob = data["y_true"], data["y_prob"]
@@ -140,6 +156,11 @@ def plot_roc_pr_curves(results: dict[str, dict[str, np.ndarray]], path: Path) ->
 def plot_calibration_curve(y_true: np.ndarray, y_prob: np.ndarray, title: str, path: Path) -> None:
     """Reliability diagram (ML_SPEC §12: predicted probabilities are shown
     directly to end users and should be reasonably well-calibrated)."""
+    import matplotlib
+
+    matplotlib.use("Agg")
+    import matplotlib.pyplot as plt
+
     frac_pos, mean_pred = calibration_curve(y_true, y_prob, n_bins=10, strategy="quantile")
     fig, ax = plt.subplots(figsize=(5, 5))
     ax.plot(mean_pred, frac_pos, marker="o", label=title)

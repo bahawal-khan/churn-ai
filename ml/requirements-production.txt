@@ -1,0 +1,25 @@
+# Production install for PythonAnywhere free tier (Phase 12 deployment
+# finding: 512 MB disk quota). Same version pins as ml/requirements.txt,
+# minus three packages that are safe to omit in production:
+#
+# - tensorflow: ~1.5 GB installed alone, ~3x the entire free-tier quota.
+#   ml/models/ann.py imports it lazily (inside set_seeds/build_model/
+#   build_callbacks, not at module scope), so the app boots and runs fine
+#   without it; company-specific "Train Model" fails with a specific,
+#   honest error if actually invoked on a host where it isn't installed
+#   (backend/services/training_service.py).
+# - matplotlib: only used by ml/models/evaluate.py's plot_* functions
+#   (dev/EDA figure generation) and ml/models/train.py's already-lazy
+#   plotting call — never invoked from backend/. Also lazily imported now
+#   (same pattern as tensorflow), so omitting it is safe.
+# - pytest: test-only, never imported outside tests/.
+#
+# ml/requirements.txt (this file's un-trimmed counterpart) is left
+# unchanged so local development and CI keep installing all three.
+
+pandas==3.0.5
+numpy==2.4.6
+scipy==1.17.1
+scikit-learn==1.9.0
+joblib==1.5.3
+shap==0.51.0

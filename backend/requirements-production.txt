@@ -1,0 +1,17 @@
+# Production install for PythonAnywhere free tier (Phase 12 deployment
+# finding: 512 MB disk quota — see ml/requirements-production.txt for what
+# was omitted and why). Same backend package pins as backend/requirements.txt;
+# only the ml/ requirements reference differs.
+#
+# backend/requirements.txt is left unchanged so local development and CI
+# keep installing the full dependency set (including tensorflow).
+
+flask==3.1.3
+pydantic==2.13.4
+sqlalchemy==2.0.44
+alembic==1.17.1
+argon2-cffi==25.1.0
+flask-cors==6.0.5
+flask-limiter==4.1.1
+
+-r ../ml/requirements-production.txt
