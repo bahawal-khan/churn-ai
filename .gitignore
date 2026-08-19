@@ -40,6 +40,9 @@ pnpm-debug.log*
 .vscode/
 *.code-workspace
 
+# TypeScript build cache
+*.tsbuildinfo
+
 # OS
 .DS_Store
 Thumbs.db
