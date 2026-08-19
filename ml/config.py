@@ -24,7 +24,16 @@ INDIA_SEED = RANDOM_SEED + 1000
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATA_RAW_DIR = REPO_ROOT / "data" / "raw"
 DATA_PROCESSED_DIR = REPO_ROOT / "data" / "processed"
+DATA_SPLITS_DIR = DATA_PROCESSED_DIR / "splits"
 IBM_RAW_CSV = DATA_RAW_DIR / "IBM_Telco_customer_churn_IBM_dataset.csv"
+
+ARTIFACTS_DIR = REPO_ROOT / "ml" / "artifacts"
+
+# --- Train / validation / test split (docs/ML_SPEC.md §6) ------------------
+
+TRAIN_RATIO = 0.70
+VAL_RATIO = 0.15
+TEST_RATIO = 0.15
 
 # --- Dataset schema contract (docs/ML_SPEC.md §1) ---------------------------
 
