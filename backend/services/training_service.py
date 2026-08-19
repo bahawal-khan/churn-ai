@@ -210,10 +210,20 @@ def run_training_job(db: DBSession, *, job: TrainingJob, dataset: Dataset, targe
             }
 
         class_weight = compute_class_weights(y_train)
-        ann_model = build_ann_model(input_dim=X_train_scaled.shape[1])
-        train_ann_model(
-            ann_model, X_train_scaled, y_train, X_val_scaled, y_val, class_weight=class_weight, verbose=0
-        )
+        try:
+            ann_model = build_ann_model(input_dim=X_train_scaled.shape[1])
+            train_ann_model(
+                ann_model, X_train_scaled, y_train, X_val_scaled, y_val, class_weight=class_weight, verbose=0
+            )
+        except ModuleNotFoundError as exc:
+            if exc.name not in ("tensorflow", "keras"):
+                raise
+            raise RuntimeError(
+                "Training requires comparing all 4 algorithms (Logistic Regression, Random "
+                "Forest, Gradient Boosting, ANN), but the ANN library (TensorFlow) is not "
+                "installed on this server. Training is unavailable in this environment until "
+                "that dependency can be installed."
+            ) from exc
         y_val_prob_ann = ann_model.predict(X_val_scaled, verbose=0).reshape(-1)
         threshold_ann, val_metrics_ann = select_threshold_by_f1(y_val, y_val_prob_ann)
         results[ALGORITHM_ANN] = {

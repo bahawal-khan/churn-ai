@@ -38,15 +38,28 @@ from __future__ import annotations
 
 import os
 import random
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import numpy as np
-import tensorflow as tf
 from sklearn.utils.class_weight import compute_class_weight
-from tensorflow import keras
-from tensorflow.keras import layers, regularizers
 
 from ml.config import ALGORITHM_ANN, RANDOM_SEED
+
+if TYPE_CHECKING:
+    from tensorflow import keras
+
+# `tensorflow`/`keras` are imported lazily, inside the functions that
+# actually build/train a model (`set_seeds`, `build_model`,
+# `build_callbacks`), rather than at module import time. TensorFlow's
+# installed footprint (~1.5 GB) exceeds PythonAnywhere's free-tier disk
+# quota (512 MB) by itself (Phase 12 finding) — this module (and everything
+# that imports names from it, e.g. `backend/services/training_service.py`)
+# must remain importable, so the rest of the app (auth, dashboard,
+# predictions against the pre-seeded baseline model) can run on a host
+# where TensorFlow was never installed. `compute_class_weights` and
+# `history_to_dict` never touched tf/keras and are unchanged. Nothing about
+# the ANN architecture, training behavior, or algorithm scope changes when
+# TensorFlow *is* installed (local dev, CI, a future non-free-tier host).
 
 HIDDEN_UNITS: tuple[int, int] = (64, 32)
 DEFAULT_DROPOUT_RATES: tuple[float, float] = (0.3, 0.2)
@@ -66,6 +79,8 @@ def set_seeds(seed: int = RANDOM_SEED) -> None:
     .enable_op_determinism()` trades a little throughput for run-to-run
     determinism, which is worth it here given the training set is small
     (~14.7k rows) and speed is not a constraint."""
+    import tensorflow as tf
+
     os.environ["PYTHONHASHSEED"] = str(seed)
     random.seed(seed)
     np.random.seed(seed)
@@ -82,6 +97,9 @@ def build_model(
     learning_rate: float = DEFAULT_LEARNING_RATE,
     seed: int = RANDOM_SEED,
 ) -> keras.Model:
+    from tensorflow import keras
+    from tensorflow.keras import layers, regularizers
+
     set_seeds(seed)
     regularizer = regularizers.l2(l2_strength) if l2_strength else None
 
@@ -145,6 +163,8 @@ def build_callbacks(
     reduce_lr_patience: int = REDUCE_LR_PATIENCE,
     reduce_lr_factor: float = REDUCE_LR_FACTOR,
 ) -> list[keras.callbacks.Callback]:
+    from tensorflow import keras
+
     return [
         keras.callbacks.EarlyStopping(
             monitor="val_pr_auc",
