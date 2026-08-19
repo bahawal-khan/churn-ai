@@ -91,3 +91,18 @@ SOURCE_INDIA_SYNTHETIC = "India-Synthetic"
 
 IBM_EXPECTED_ROW_COUNT = 7043
 SYNTHETIC_RECORDS_PER_COUNTRY = 7000
+
+# --- Model artifacts / metadata (docs/ML_SPEC.md §14, docs/DATABASE_SPEC.md §2.7) ---
+
+# Matches the `models.algorithm` CHECK constraint exactly, so
+# `metadata.json["algorithm"]` values are drop-in compatible with the future
+# DB seeding script (docs/DATABASE_SPEC.md §2.7).
+ALGORITHM_LOGISTIC_REGRESSION = "logistic_regression"
+ALGORITHM_RANDOM_FOREST = "random_forest"
+ALGORITHM_GRADIENT_BOOSTING = "gradient_boosting"
+ALGORITHM_ANN = "ann"
+
+# Initial fixed risk-probability thresholds (docs/PROJECT_SPEC.md §18),
+# stored verbatim on every model artifact's metadata.json so a later model
+# row can be seeded with `models.risk_thresholds` unchanged.
+RISK_THRESHOLDS = {"low_max": 0.3, "medium_max": 0.6}
