@@ -9,14 +9,15 @@ def test_unknown_route_returns_standard_envelope(client):
     assert "request_id" in body
 
 
-def test_predictions_return_model_unavailable_when_no_artifact_present(app, monkeypatch, tmp_path, sample_customer_payload):
+def test_predictions_return_model_unavailable_when_no_artifact_present(
+    client, monkeypatch, tmp_path, sample_customer_payload
+):
     from ml import config as ml_config
     from backend.services import model_registry
 
     monkeypatch.setattr(ml_config, "ARTIFACTS_DIR", tmp_path / "empty")
     model_registry.reset_cache()
 
-    client = app.test_client()
     resp = client.post("/api/predictions/single", json={"customer_data": sample_customer_payload})
     assert resp.status_code == 503
     body = resp.get_json()

@@ -7,7 +7,7 @@ def test_health_ok(client):
     body = resp.get_json()
     assert body["data"]["status"] == "ok"
     assert body["data"]["model_loaded"] is True
-    assert body["data"]["db"] == "not_configured"
+    assert body["data"]["db"] == "ok"
     assert "request_id" in body and body["request_id"]
 
 

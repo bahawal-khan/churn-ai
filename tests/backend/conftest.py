@@ -14,11 +14,14 @@ from __future__ import annotations
 
 import json
 from datetime import datetime, timezone
+from pathlib import Path
 
 import joblib
 import numpy as np
 import pandas as pd
 import pytest
+from alembic import command
+from alembic.config import Config as AlembicConfig
 
 from ml import config as ml_config
 from ml.config import ALGORITHM_RANDOM_FOREST, MODELING_COLUMNS, RANDOM_SEED, RISK_THRESHOLDS, TARGET_COLUMN
@@ -32,6 +35,14 @@ from backend.config import TestConfig
 from backend.services import model_registry
 
 MODEL_ID = "test_random_forest_v1"
+BACKEND_DIR = Path(__file__).resolve().parents[2] / "backend"
+
+DEFAULT_SIGNUP_PAYLOAD = {
+    "email": "test.user@example.com",
+    "password": "StrongPass1!",
+    "confirm_password": "StrongPass1!",
+    "full_name": "Test User",
+}
 
 
 def _make_row(rng: np.random.RandomState, churn: int) -> dict:
@@ -124,13 +135,53 @@ def tiny_artifacts_dir(tmp_path, monkeypatch):
 
 
 @pytest.fixture()
-def app(tiny_artifacts_dir):
+def test_db_url(tmp_path, monkeypatch):
+    """Runs the real `alembic upgrade head` chain (`backend/db/migrations/`)
+    against a fresh per-test SQLite file, so the test suite proves the
+    migration actually builds a working schema — not just that the ORM
+    models are internally consistent (`docs/DATABASE_SPEC.md` §7-8,
+    "Migrations" in the Phase 8 acceptance criteria)."""
+    db_path = tmp_path / "test_churnai.db"
+    url = f"sqlite:///{db_path}"
+    monkeypatch.setenv("DATABASE_URL", url)
+
+    alembic_cfg = AlembicConfig(str(BACKEND_DIR / "alembic.ini"))
+    alembic_cfg.set_main_option("script_location", str(BACKEND_DIR / "db" / "migrations"))
+    alembic_cfg.set_main_option("path_separator", "os")
+    command.upgrade(alembic_cfg, "head")
+
+    return url
+
+
+@pytest.fixture()
+def app(tiny_artifacts_dir, test_db_url):
     return create_app(TestConfig)
 
 
 @pytest.fixture()
-def client(app):
+def anon_client(app):
+    """An unauthenticated test client — for auth-flow tests and for
+    asserting protected routes reject a missing/invalid session
+    (`docs/BACKEND_SPEC.md` §4)."""
     return app.test_client()
+
+
+@pytest.fixture()
+def signup_payload() -> dict:
+    return dict(DEFAULT_SIGNUP_PAYLOAD)
+
+
+@pytest.fixture()
+def client(app, signup_payload):
+    """An authenticated test client (session cookie carried automatically by
+    the Flask test client's cookie jar across requests). Most of this
+    module's tests exercise `predictions`/`models`, which now require
+    `@login_required` (Phase 8) — signing up here once, rather than in every
+    test, keeps the Phase 7 tests unchanged in intent."""
+    test_client = app.test_client()
+    resp = test_client.post("/api/auth/signup", json=signup_payload)
+    assert resp.status_code == 201, resp.get_json()
+    return test_client
 
 
 @pytest.fixture()

@@ -74,3 +74,37 @@ class ModelUnavailableError(AppError):
 class NotFoundError(AppError):
     code = "NOT_FOUND"
     http_status = 404
+
+
+class InvalidCredentialsError(AppError):
+    """Bad email/password on login (`docs/BACKEND_SPEC.md` §4: generic
+    message on any failure, no user-enumeration hint via wording)."""
+
+    code = "INVALID_CREDENTIALS"
+    http_status = 401
+
+
+class SessionExpiredError(AppError):
+    """Missing, expired, or revoked session cookie."""
+
+    code = "SESSION_EXPIRED"
+    http_status = 401
+
+
+class ForbiddenError(AppError):
+    code = "FORBIDDEN"
+    http_status = 403
+
+
+class EmailAlreadyExistsError(AppError):
+    """Signup with an email already in use (`docs/API.md` auth table)."""
+
+    code = "EMAIL_ALREADY_EXISTS"
+    http_status = 409
+
+
+class InvalidResetTokenError(AppError):
+    """Reset token missing, expired, already used, or malformed."""
+
+    code = "VALIDATION_ERROR"
+    http_status = 422

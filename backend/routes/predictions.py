@@ -1,13 +1,20 @@
 """`/api/predictions` (`docs/API.md`): single + batch prediction.
 
-Phase 7 simplifications (documented, not silent): no `datasets`/`customers`/
-`predictions` tables exist yet, so batch prediction is always processed
-synchronously in one request/response (no `batch_job_id` polling) and
-nothing is persisted — every input row still appears in the response with
-its prediction (or its per-row error), preserving the customer-linkage
-contract (`docs/PROJECT_SPEC.md` §17.B) without a database behind it. A
-client can request the same result as a downloadable CSV in the same call
-via `?format=csv` instead of a separate stored-download endpoint.
+Phase 7 simplifications (documented, not silent, still true in Phase 8):
+no `datasets`/`customers`/`predictions` tables are written to by these
+routes yet, so batch prediction is always processed synchronously in one
+request/response (no `batch_job_id` polling) and nothing is persisted —
+every input row still appears in the response with its prediction (or its
+per-row error), preserving the customer-linkage contract
+(`docs/PROJECT_SPEC.md` §17.B) without a database behind it. A client can
+request the same result as a downloadable CSV in the same call via
+`?format=csv` instead of a separate stored-download endpoint.
+
+Phase 8 addition: both routes now require an authenticated session
+(`@login_required`, `docs/BACKEND_SPEC.md` §4 — "every non-auth, non-health
+route"). No `@ownership_required` check yet since predictions here are
+served from the org-agnostic global baseline artifact, not a stored,
+org-owned row.
 """
 
 from __future__ import annotations
@@ -18,6 +25,7 @@ from pydantic import ValidationError as PydanticValidationError
 
 from ml.data_quality.validator import DataQualityValidator
 
+from backend.auth.decorators import login_required
 from backend.errors.exceptions import DataQualityFailedError, SchemaMismatchError, ValidationError
 from backend.services import file_service, model_registry, prediction_service
 from backend.utils import success_response
@@ -27,6 +35,7 @@ predictions_bp = Blueprint("predictions", __name__)
 
 
 @predictions_bp.post("/single")
+@login_required
 def post_single_prediction():
     payload = request.get_json(silent=True)
     if payload is None:
@@ -44,6 +53,7 @@ def post_single_prediction():
 
 
 @predictions_bp.post("/batch")
+@login_required
 def post_batch_prediction():
     file_storage = request.files.get("file")
     max_bytes = request.max_content_length or (25 * 1024 * 1024)
