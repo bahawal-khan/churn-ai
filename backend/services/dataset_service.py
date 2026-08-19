@@ -20,6 +20,7 @@ documented schema gap.
 
 from __future__ import annotations
 
+import re
 import uuid
 from pathlib import Path
 from typing import Any
@@ -36,19 +37,25 @@ from backend.services import audit_service
 
 PREVIEW_ROW_COUNT = 10
 
-
-def _normalize(name: str) -> str:
-    return name.strip().lower()
+_WHITESPACE_RE = re.compile(r"\s+")
 
 
-def _match_modeling_columns(df: pd.DataFrame) -> dict[str, str]:
-    """Case/whitespace-insensitive match of `df` columns to
-    `ml.config.MODELING_COLUMNS` (`docs/PROJECT_SPEC.md` §16.1 step 1,
-    "Detection"). Returns `{schema_column: actual_df_column}`."""
-    by_normalized = {_normalize(c): c for c in df.columns}
+def normalize_column_name(name: str) -> str:
+    """Case/whitespace-insensitive per `docs/PROJECT_SPEC.md` §16.1 step 1
+    ("Detection") — collapses internal whitespace too, not just leading/
+    trailing, so e.g. "Customer ID" and "CustomerID" are recognized as the
+    same column."""
+    return _WHITESPACE_RE.sub("", name.strip().lower())
+
+
+def match_columns_to_schema(df_columns: list[str], schema_columns: list[str]) -> dict[str, str]:
+    """Case/whitespace-insensitive match of `df_columns` to `schema_columns`
+    (`docs/PROJECT_SPEC.md` §16.1 step 1, "Detection"). Returns
+    `{schema_column: actual_df_column}`."""
+    by_normalized = {normalize_column_name(c): c for c in df_columns}
     matched = {}
-    for schema_col in MODELING_COLUMNS:
-        actual = by_normalized.get(_normalize(schema_col))
+    for schema_col in schema_columns:
+        actual = by_normalized.get(normalize_column_name(schema_col))
         if actual is not None:
             matched[schema_col] = actual
     return matched
@@ -82,7 +89,7 @@ def ingest_customers_from_dataframe(
     (`docs/DATABASE_SPEC.md` §2.6). Matched by `external_customer_id` when it
     identifies an existing org customer, otherwise created
     (`docs/PROJECT_SPEC.md` §17.B). Returns the number of rows ingested."""
-    matched = _match_modeling_columns(df)
+    matched = match_columns_to_schema(df.columns.tolist(), MODELING_COLUMNS)
     existing_by_external_id: dict[str, Customer] = {}
     if id_column and id_column in df.columns:
         existing = (

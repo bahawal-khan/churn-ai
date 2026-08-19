@@ -24,7 +24,6 @@ from ml.data_quality.validator import DataQualityValidator
 from backend.auth.decorators import login_required
 from backend.db import session as db_session
 from backend.errors.exceptions import (
-    DataQualityFailedError,
     NotFoundError,
     SchemaMismatchError,
     ValidationError,
@@ -73,11 +72,22 @@ def post_batch_prediction():
 
     db = db_session.get_session()
     organization_id = g.current_user.organization_id
-    id_column = "CustomerID" if "CustomerID" in df.columns else None
 
     bundle, model_row = prediction_service.resolve_bundle(db, organization_id)
     feature_schema = bundle.metadata["feature_schema"]
     required_columns = [f["name"] for f in feature_schema]
+
+    # Case/whitespace-insensitive column detection (`docs/PROJECT_SPEC.md`
+    # §16.1 step 1): rename matched upload columns to their canonical schema
+    # names (including the id column) *before* quality validation/scoring,
+    # so a header like "senior citizen" or "Customer ID" is recognized
+    # rather than failing the whole batch as missing columns. Values are
+    # never touched here — a wrong *value* (e.g. "0"/"1" for Senior Citizen)
+    # still fails per-row validation in `prediction_service.predict_batch`.
+    column_mapping = dataset_service.match_columns_to_schema(df.columns.tolist(), required_columns)
+    column_mapping.update(dataset_service.match_columns_to_schema(df.columns.tolist(), ["CustomerID"]))
+    df = df.rename(columns={actual: schema_col for schema_col, actual in column_mapping.items()})
+    id_column = "CustomerID" if "CustomerID" in df.columns else None
 
     validator = DataQualityValidator(
         required_columns=required_columns, target_column=None, id_column=id_column
@@ -268,19 +278,19 @@ def _customer_ids_for_rows(db, organization_id, dataset_id, df, id_column):
 
 
 def _enforce_quality_report(quality_report: dict) -> None:
-    checks_by_name = {c["name"]: c for c in quality_report["checks"]}
-
-    missing_check = checks_by_name.get("missing_required_columns")
+    """Only `missing_required_columns` blocks the whole batch — a feature the
+    model needs isn't present in the file at all, so no row can be scored.
+    Every other "fail"-status check (bad numeric values, duplicate rows,
+    inconsistent category casing, ...) is a per-row/per-value problem that
+    `prediction_service.predict_batch` already handles by flagging just the
+    offending rows and scoring the rest — blocking the whole upload for
+    those would contradict "preserve successful rows" (`docs/PROJECT_SPEC.md`
+    §17.B). The full `quality_report`, fails included, is still returned to
+    the caller for visibility either way."""
+    missing_check = next((c for c in quality_report["checks"] if c["name"] == "missing_required_columns"), None)
     if missing_check and missing_check["status"] == "fail":
         missing_columns = missing_check["detail"]["missing_columns"]
         raise SchemaMismatchError(
             "The uploaded file is missing required columns: " + ", ".join(missing_columns) + ".",
             details={"missing_columns": missing_columns},
-        )
-
-    other_failures = [c["name"] for c in quality_report["checks"] if c["status"] == "fail"]
-    if other_failures:
-        raise DataQualityFailedError(
-            "The uploaded file failed data quality validation: " + ", ".join(other_failures) + ".",
-            details={"quality_report": quality_report},
         )

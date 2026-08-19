@@ -10,7 +10,7 @@ can know a schema that changes with which model is active.
 from __future__ import annotations
 
 import re
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, ConfigDict, field_validator, model_validator
 
@@ -143,6 +143,24 @@ class ReportGenerateRequest(BaseModel):
         if value not in allowed:
             raise ValueError(f"report_type must be one of {sorted(allowed)}.")
         return value
+
+
+class UpdateProfileRequest(BaseModel):
+    """`PATCH /api/auth/profile` (`docs/FRONTEND_SPEC.md` §3/§8: theme
+    preference and onboarding-completion persist server-side on the `users`
+    row). Both fields optional, but at least one must be provided — an empty
+    patch is a client bug, not a valid no-op request."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    theme_preference: Literal["light", "dark"] | None = None
+    onboarding_completed: bool | None = None
+
+    @model_validator(mode="after")
+    def _at_least_one_field(self) -> "UpdateProfileRequest":
+        if self.theme_preference is None and self.onboarding_completed is None:
+            raise ValueError("At least one of theme_preference or onboarding_completed is required.")
+        return self
 
 
 class ResetPasswordRequest(BaseModel):

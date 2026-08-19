@@ -263,6 +263,55 @@ def test_reset_password_rejects_reused_token(anon_client, signup_payload, caplog
     assert "invalid" in second.get_json()["error"]["message"].lower() or "expired" in second.get_json()["error"]["message"].lower()
 
 
+# ---------------------------------------------------------------------------
+# Profile update (theme preference / onboarding completion)
+# ---------------------------------------------------------------------------
+
+
+def test_update_profile_theme_preference(client):
+    resp = client.patch("/api/auth/profile", json={"theme_preference": "light"})
+    assert resp.status_code == 200
+    body = resp.get_json()["data"]
+    assert body["theme_preference"] == "light"
+
+
+def test_update_profile_onboarding_completed(client):
+    resp = client.patch("/api/auth/profile", json={"onboarding_completed": True})
+    assert resp.status_code == 200
+    body = resp.get_json()["data"]
+    assert body["onboarding_completed_at"] is not None
+
+
+def test_update_profile_includes_organization_name(client):
+    resp = client.patch("/api/auth/profile", json={"theme_preference": "dark"})
+    assert resp.status_code == 200
+    body = resp.get_json()["data"]
+    assert body["organization_name"]
+
+
+def test_session_response_includes_organization_name(client):
+    resp = client.get("/api/auth/session")
+    assert resp.status_code == 200
+    assert resp.get_json()["data"]["organization_name"]
+
+
+def test_update_profile_rejects_unauthenticated(anon_client):
+    resp = anon_client.patch("/api/auth/profile", json={"theme_preference": "light"})
+    assert resp.status_code == 401
+    assert resp.get_json()["error"]["code"] == "SESSION_EXPIRED"
+
+
+def test_update_profile_rejects_invalid_theme_value(client):
+    resp = client.patch("/api/auth/profile", json={"theme_preference": "blue"})
+    assert resp.status_code == 422
+    assert resp.get_json()["error"]["code"] == "VALIDATION_ERROR"
+
+
+def test_update_profile_rejects_empty_body(client):
+    resp = client.patch("/api/auth/profile", json={})
+    assert resp.status_code == 422
+
+
 def test_reset_password_rejects_expired_token(app, signup_payload, caplog):
     caplog.set_level(logging.INFO, logger="churnai.backend.auth")
     anon_client = app.test_client()

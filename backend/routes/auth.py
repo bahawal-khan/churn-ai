@@ -12,7 +12,7 @@ from pydantic import ValidationError as PydanticValidationError
 from backend.auth.decorators import login_required
 from backend.auth.session import clear_session_cookie, set_session_cookie
 from backend.db import session as db_session
-from backend.db.models import User
+from backend.db.models import Organization, User
 from backend.errors.exceptions import ValidationError
 from backend.services import auth_service
 from backend.utils import success_response
@@ -21,6 +21,7 @@ from backend.validation.schemas import (
     LoginRequest,
     ResetPasswordRequest,
     SignupRequest,
+    UpdateProfileRequest,
 )
 
 auth_bp = Blueprint("auth", __name__)
@@ -44,13 +45,23 @@ def _parse(schema_cls, payload: Any):
         ) from exc
 
 
-def _user_profile(user: User) -> dict[str, Any]:
-    """Never includes `password_hash` (`docs/BACKEND_SPEC.md` §4)."""
+def _user_profile(user: User, db: Any = None) -> dict[str, Any]:
+    """Never includes `password_hash` (`docs/BACKEND_SPEC.md` §4).
+    `organization_name` is an additive field (Phase 10: Settings/Topbar need
+    it to display something more human than a bare `organization_id`) —
+    looked up separately since no ORM relationship is declared on `User`
+    (`docs/DATABASE_SPEC.md` querying convention throughout this codebase is
+    explicit `db.query`/`db.get`, not relationship traversal)."""
+    organization_name = None
+    if db is not None:
+        organization = db.get(Organization, user.organization_id)
+        organization_name = organization.name if organization else None
     return {
         "id": user.id,
         "email": user.email,
         "full_name": user.full_name,
         "organization_id": user.organization_id,
+        "organization_name": organization_name,
         "theme_preference": user.theme_preference,
         "onboarding_completed_at": (
             user.onboarding_completed_at.isoformat() if user.onboarding_completed_at else None
@@ -79,7 +90,7 @@ def post_signup():
         session_ttl_days=_session_ttl_days(),
         user_agent=request.headers.get("User-Agent"),
     )
-    response, status = success_response(_user_profile(user), status=201)
+    response, status = success_response(_user_profile(user, db), status=201)
     set_session_cookie(response, session_record.id, _session_ttl_days(), _cookie_secure())
     return response, status
 
@@ -95,7 +106,7 @@ def post_login():
         session_ttl_days=_session_ttl_days(),
         user_agent=request.headers.get("User-Agent"),
     )
-    response, status = success_response(_user_profile(user))
+    response, status = success_response(_user_profile(user, db))
     set_session_cookie(response, session_record.id, _session_ttl_days(), _cookie_secure())
     return response, status
 
@@ -113,7 +124,22 @@ def post_logout():
 @auth_bp.get("/session")
 @login_required
 def get_session_route():
-    return success_response(_user_profile(g.current_user))
+    db = db_session.get_session()
+    return success_response(_user_profile(g.current_user, db))
+
+
+@auth_bp.patch("/profile")
+@login_required
+def patch_profile():
+    parsed = _parse(UpdateProfileRequest, request.get_json(silent=True))
+    db = db_session.get_session()
+    user = auth_service.update_profile(
+        db,
+        user=g.current_user,
+        theme_preference=parsed.theme_preference,
+        onboarding_completed=parsed.onboarding_completed,
+    )
+    return success_response(_user_profile(user, db))
 
 
 @auth_bp.post("/forgot-password")

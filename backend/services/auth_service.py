@@ -101,6 +101,25 @@ def logout(db: DBSession, session_record: SessionRecord, user: User) -> None:
     db.commit()
 
 
+def update_profile(
+    db: DBSession,
+    *,
+    user: User,
+    theme_preference: str | None = None,
+    onboarding_completed: bool | None = None,
+) -> User:
+    """`PATCH /api/auth/profile`: updates only the fields provided.
+    `onboarding_completed=True` stamps `onboarding_completed_at` (never
+    unset once set, per `docs/FRONTEND_SPEC.md` §8 — completing/skipping the
+    tour marks it done, there's no "un-complete" action)."""
+    if theme_preference is not None:
+        user.theme_preference = theme_preference
+    if onboarding_completed is True and user.onboarding_completed_at is None:
+        user.onboarding_completed_at = _utcnow()
+    db.commit()
+    return user
+
+
 def forgot_password(db: DBSession, *, email: str, reset_token_ttl_minutes: int) -> None:
     """Always behaves identically to the caller whether or not the email
     exists (`docs/API.md`: "always 200 ... to avoid enumeration") — the route
