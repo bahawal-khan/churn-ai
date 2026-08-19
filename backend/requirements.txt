@@ -1,0 +1,7 @@
+flask==3.1.3
+pydantic==2.13.4
+
+# Shared with ml/requirements.txt — the backend's services/ layer imports
+# ml/ directly (docs/BACKEND_SPEC.md §1) to load model artifacts and run
+# inference/SHAP.
+-r ../ml/requirements.txt
