@@ -1,0 +1,84 @@
+"""Shared constants for the ml/ package.
+
+Single source of truth for the random seed and the dataset schema contract
+(`docs/ML_SPEC.md` §1), so every generator, audit script, and test imports
+the same values instead of redefining them.
+"""
+
+from pathlib import Path
+
+# --- Reproducibility -------------------------------------------------------
+
+RANDOM_SEED = 42
+
+# Distinct per-country seeds derived from RANDOM_SEED. Using the same seed
+# for both country generators would make identically-shaped draws (e.g. the
+# 50/50 Gender split, drawn in the same call order for both) line up
+# row-for-row between the two datasets — these offsets avoid that spurious
+# cross-country correlation while staying deterministic.
+PAKISTAN_SEED = RANDOM_SEED
+INDIA_SEED = RANDOM_SEED + 1000
+
+# --- Paths -------------------------------------------------------------
+
+REPO_ROOT = Path(__file__).resolve().parent.parent
+DATA_RAW_DIR = REPO_ROOT / "data" / "raw"
+DATA_PROCESSED_DIR = REPO_ROOT / "data" / "processed"
+IBM_RAW_CSV = DATA_RAW_DIR / "IBM_Telco_customer_churn_IBM_dataset.csv"
+
+# --- Dataset schema contract (docs/ML_SPEC.md §1) ---------------------------
+
+# Raw modeling columns kept after audit (identifiers/zero-variance/leakage
+# columns already excluded). `CLTV` is intentionally excluded here — its
+# inclusion is a Phase 2 EDA decision, not assumed in Phase 1.
+MODELING_COLUMNS = [
+    "Gender",
+    "Senior Citizen",
+    "Partner",
+    "Dependents",
+    "Tenure Months",
+    "Phone Service",
+    "Multiple Lines",
+    "Internet Service",
+    "Online Security",
+    "Online Backup",
+    "Device Protection",
+    "Tech Support",
+    "Streaming TV",
+    "Streaming Movies",
+    "Contract",
+    "Paperless Billing",
+    "Payment Method",
+    "Monthly Charges",
+    "Total Charges",
+]
+
+TARGET_COLUMN = "Churn Value"
+
+# Provenance/metadata-only column. Never a production model feature
+# (PROJECT_SPEC.md binding cross-cutting rule; ML_SPEC.md §1, §6).
+SOURCE_COLUMN = "Source"
+
+# Columns dropped before modeling for the IBM subset (identifiers,
+# zero-variance, or direct target leakage). Kept here for reference/tests,
+# not imported by the generators (they never produce these columns).
+IBM_DROPPED_COLUMNS = [
+    "CustomerID",
+    "Count",
+    "Country",
+    "State",
+    "City",
+    "Zip Code",
+    "Lat Long",
+    "Latitude",
+    "Longitude",
+    "Churn Score",
+    "Churn Reason",
+]
+
+SOURCE_IBM = "IBM"
+SOURCE_PAKISTAN_SYNTHETIC = "Pakistan-Synthetic"
+SOURCE_INDIA_SYNTHETIC = "India-Synthetic"
+
+IBM_EXPECTED_ROW_COUNT = 7043
+SYNTHETIC_RECORDS_PER_COUNTRY = 7000

@@ -1,0 +1,79 @@
+{
+  "record_counts": {
+    "pakistan": 7000,
+    "india": 7000,
+    "combined_synthetic": 14000
+  },
+  "overall_churn_rate": {
+    "pakistan": 0.3144,
+    "india": 0.3339,
+    "combined_synthetic": 0.3241
+  },
+  "churn_rate_by_country": {
+    "India-Synthetic": 0.3339,
+    "Pakistan-Synthetic": 0.3144
+  },
+  "churn_rate_by_archetype": {
+    "pakistan": {
+      "rural_low_connectivity": 0.2924,
+      "semi_urban_family": 0.1762,
+      "urban_high_income": 0.0695,
+      "urban_low_income_price_sensitive": 0.4638,
+      "urban_middle_income": 0.2474,
+      "young_single_urban_prepaid_like": 0.6819
+    },
+    "india": {
+      "metro_high_income": 0.0867,
+      "metro_middle_income": 0.2766,
+      "metro_price_sensitive": 0.479,
+      "rural_low_connectivity": 0.3181,
+      "semi_urban_family": 0.1914,
+      "young_urban_single_high_churn": 0.6895
+    }
+  },
+  "single_feature_auc": {
+    "contract_is_month_to_month": 0.6708,
+    "monthly_charges": 0.4135,
+    "tenure_months": 0.3024,
+    "no_tech_support": 0.5677,
+    "electronic_check_payment": 0.5743,
+    "has_family": 0.3703
+  },
+  "sanity_check_logistic_regression": {
+    "auc": 0.7623,
+    "coefficients": {
+      "contract_is_month_to_month": 0.5322,
+      "monthly_charges": 0.0263,
+      "tenure_months": -0.4727,
+      "no_tech_support": 0.1939,
+      "electronic_check_payment": 0.2258,
+      "has_family": -0.3264
+    },
+    "expected_signs": {
+      "contract_is_month_to_month": 1,
+      "monthly_charges": 1,
+      "tenure_months": -1,
+      "no_tech_support": 1,
+      "electronic_check_payment": 1,
+      "has_family": -1
+    },
+    "sign_matches": {
+      "contract_is_month_to_month": true,
+      "monthly_charges": true,
+      "tenure_months": true,
+      "no_tech_support": true,
+      "electronic_check_payment": true,
+      "has_family": true
+    },
+    "all_signs_match": true
+  },
+  "checks": {
+    "overall_churn_rate_in_band": true,
+    "pakistan_churn_rate_in_band": true,
+    "india_churn_rate_in_band": true,
+    "sanity_check_auc_in_band": true,
+    "all_expected_signs_match": true,
+    "no_single_feature_near_perfect_auc": true
+  },
+  "all_checks_passed": true
+}
