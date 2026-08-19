@@ -154,8 +154,15 @@ def test_db_url(tmp_path, monkeypatch):
 
 
 @pytest.fixture()
-def app(tiny_artifacts_dir, test_db_url):
-    return create_app(TestConfig)
+def app(tiny_artifacts_dir, test_db_url, tmp_path):
+    class _IsolatedTestConfig(TestConfig):
+        # Phase 9: uploaded datasets/generated reports are written to disk —
+        # isolated per test so the suite never touches the real
+        # `backend/storage/` directory or leaks files between tests.
+        UPLOAD_STORAGE_DIR = tmp_path / "uploads"
+        REPORTS_STORAGE_DIR = tmp_path / "reports"
+
+    return create_app(_IsolatedTestConfig)
 
 
 @pytest.fixture()
@@ -180,6 +187,24 @@ def client(app, signup_payload):
     test, keeps the Phase 7 tests unchanged in intent."""
     test_client = app.test_client()
     resp = test_client.post("/api/auth/signup", json=signup_payload)
+    assert resp.status_code == 201, resp.get_json()
+    return test_client
+
+
+@pytest.fixture()
+def second_client(app):
+    """A second, independently-authenticated org — for cross-tenant
+    isolation tests (`docs/DATABASE_SPEC.md` §6: a second org must never be
+    able to read the first org's rows, including by guessing sequential
+    ids)."""
+    test_client = app.test_client()
+    payload = {
+        "email": "second.user@example.com",
+        "password": "StrongPass1!",
+        "confirm_password": "StrongPass1!",
+        "full_name": "Second User",
+    }
+    resp = test_client.post("/api/auth/signup", json=payload)
     assert resp.status_code == 201, resp.get_json()
     return test_client
 

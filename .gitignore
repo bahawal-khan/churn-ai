@@ -19,6 +19,7 @@ ml/artifacts/
 # Flask
 instance/
 .flaskenv
+backend/storage/
 
 # Node / Next.js
 node_modules/

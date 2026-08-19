@@ -108,3 +108,28 @@ class InvalidResetTokenError(AppError):
 
     code = "VALIDATION_ERROR"
     http_status = 422
+
+
+class TrainingLabelsRequiredError(AppError):
+    """No valid binary target column available on the dataset
+    (`docs/PROJECT_SPEC.md` §16 — blocks `POST /api/training/jobs`)."""
+
+    code = "TRAINING_LABELS_REQUIRED"
+    http_status = 422
+
+
+class TrainingFailedError(AppError):
+    """Training pipeline raised while fitting/evaluating a company-specific
+    model (`docs/BACKEND_SPEC.md` §7)."""
+
+    code = "TRAINING_FAILED"
+    http_status = 500
+
+
+class DatasetInUseError(AppError):
+    """Dataset delete blocked because a model still references it
+    (`models.trained_on_dataset_id` is `RESTRICT`, `docs/API.md` datasets
+    table, `docs/DATABASE_SPEC.md` §3)."""
+
+    code = "DATASET_IN_USE"
+    http_status = 409

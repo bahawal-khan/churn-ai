@@ -9,6 +9,9 @@ values — production always sets these via real env vars.
 from __future__ import annotations
 
 import os
+from pathlib import Path
+
+_BACKEND_DIR = Path(__file__).resolve().parent
 
 
 class Config:
@@ -44,6 +47,22 @@ class Config:
     # `docs/DEPLOYMENT.md` §2: true in production; local HTTP dev needs it
     # off or browsers silently refuse to store the cookie.
     SESSION_COOKIE_SECURE = os.environ.get("SESSION_COOKIE_SECURE", "false").lower() == "true"
+
+    # `docs/BACKEND_SPEC.md` §6: uploaded CSVs are stored under a
+    # server-generated UUID filename, outside any statically-served path.
+    # Separate from `ml/artifacts/` (model output, `docs/DATABASE_SPEC.md`
+    # §2.7) — this directory holds dataset *input* files (§2.5).
+    UPLOAD_STORAGE_DIR = Path(
+        os.environ.get("CHURNAI_UPLOAD_DIR", str(_BACKEND_DIR / "storage" / "uploads"))
+    )
+    # Generated report exports (`docs/API.md` `/api/reports`). No `reports`
+    # table exists in `docs/DATABASE_SPEC.md` §2 — a gap in the spec set, not
+    # an oversight here (flagged in the Phase 9 report). Reports are
+    # persisted as files with a JSON metadata sidecar, scoped per-org by
+    # directory, rather than inventing a new migration for this phase.
+    REPORTS_STORAGE_DIR = Path(
+        os.environ.get("CHURNAI_REPORTS_DIR", str(_BACKEND_DIR / "storage" / "reports"))
+    )
 
 
 class TestConfig(Config):

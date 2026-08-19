@@ -111,6 +111,40 @@ class ForgotPasswordRequest(BaseModel):
         return value.strip().lower()
 
 
+class TrainingJobRequest(BaseModel):
+    """`POST /api/training/jobs` (`docs/API.md`)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    dataset_id: int
+    target_column: str
+
+    @field_validator("target_column")
+    @classmethod
+    def _target_column_not_blank(cls, value: str) -> str:
+        value = value.strip()
+        if not value:
+            raise ValueError("target_column is required.")
+        return value
+
+
+class ReportGenerateRequest(BaseModel):
+    """`POST /api/reports/generate` (`docs/API.md`)."""
+
+    model_config = ConfigDict(extra="ignore")
+
+    report_type: str
+    filters: dict[str, Any] = {}
+
+    @field_validator("report_type")
+    @classmethod
+    def _report_type_known(cls, value: str) -> str:
+        allowed = {"predictions_summary", "customers_summary"}
+        if value not in allowed:
+            raise ValueError(f"report_type must be one of {sorted(allowed)}.")
+        return value
+
+
 class ResetPasswordRequest(BaseModel):
     model_config = ConfigDict(extra="ignore")
 
