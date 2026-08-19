@@ -1,0 +1,188 @@
+/* Design tokens (`docs/FRONTEND_SPEC.md` §2). Light is the base `:root`
+   palette; dark overrides via `[data-theme="dark"]` (explicit user choice)
+   and via `prefers-color-scheme` when no explicit choice has been made yet
+   (`:root:not([data-theme])`), so both themes are first-class peers, not a
+   dark-only design retrofitted with a light variant. */
+
+:root {
+  --bg-app: #f6f7fb;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --accent-primary: #6366f1;
+  --accent-primary-hover: #4f46e5;
+  --accent-primary-soft: rgba(99, 102, 241, 0.1);
+  --risk-low: #16a34a;
+  --risk-low-soft: rgba(22, 163, 74, 0.1);
+  --risk-medium: #d97706;
+  --risk-medium-soft: rgba(217, 119, 6, 0.1);
+  --risk-high: #dc2626;
+  --risk-high-soft: rgba(220, 38, 38, 0.1);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.08);
+  --success: #16a34a;
+  --focus-ring: #6366f1;
+  --radius-card: 12px;
+  --radius-control: 8px;
+  --radius-pill: 999px;
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-elevated: 0 8px 24px rgba(15, 23, 42, 0.12);
+
+  /* Marketing/public-page visual system (`Design.md`): kept as a separate
+     token set so the authenticated app's existing look is untouched — only
+     components under `components/marketing/` and `app/(marketing)/` read
+     these. Light mode uses brighter, more saturated glow stops (soft tinted
+     sections on a white surface) rather than a dimmed copy of dark mode. */
+  --glow-purple: #8b5cf6;
+  --glow-blue: #6366f1;
+  --glow-cyan: #06b6d4;
+  --glow-pink: #ec4899;
+  --glow-orange: #f97316;
+  --glow-teal: #14b8a6;
+  --marketing-bg-app: #f7f7fd;
+  --marketing-surface: rgba(255, 255, 255, 0.72);
+  --marketing-surface-solid: #ffffff;
+  --marketing-border: rgba(99, 102, 241, 0.14);
+  --marketing-border-hover: rgba(139, 92, 246, 0.4);
+  --marketing-glow-opacity: 0.28;
+  --marketing-shadow-card: 0 1px 2px rgba(76, 29, 149, 0.04), 0 12px 32px -12px rgba(76, 29, 149, 0.14);
+  --marketing-shadow-hover: 0 1px 2px rgba(76, 29, 149, 0.05), 0 20px 48px -16px rgba(99, 102, 241, 0.28);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg-app: #0b1120;
+    --bg-surface: #11172a;
+    --bg-elevated: #171f36;
+    --text-primary: #f5f7fb;
+    --text-muted: #94a3b8;
+    --text-inverse: #0b1120;
+    --border-subtle: #232c47;
+    --border-strong: #333f63;
+    --accent-primary: #6d6bf9;
+    --accent-primary-hover: #8280fb;
+    --accent-primary-soft: rgba(109, 107, 249, 0.18);
+    --risk-low: #22c55e;
+    --risk-low-soft: rgba(34, 197, 94, 0.16);
+    --risk-medium: #f59e0b;
+    --risk-medium-soft: rgba(245, 158, 11, 0.16);
+    --risk-high: #ef4444;
+    --risk-high-soft: rgba(239, 68, 68, 0.16);
+    --danger: #ef4444;
+    --danger-soft: rgba(239, 68, 68, 0.14);
+    --success: #22c55e;
+    --focus-ring: #8280fb;
+    --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+    --glow-purple: #a78bfa;
+    --glow-blue: #818cf8;
+    --glow-cyan: #22d3ee;
+    --glow-pink: #f472b6;
+    --glow-orange: #fb923c;
+    --glow-teal: #2dd4bf;
+    --marketing-bg-app: #080b16;
+    --marketing-surface: rgba(23, 31, 54, 0.6);
+    --marketing-surface-solid: #11172a;
+    --marketing-border: rgba(129, 140, 248, 0.18);
+    --marketing-border-hover: rgba(167, 139, 250, 0.55);
+    --marketing-glow-opacity: 0.35;
+    --marketing-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.55);
+    --marketing-shadow-hover: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 56px -16px rgba(129, 140, 248, 0.45);
+  }
+}
+
+:root[data-theme="dark"] {
+  --bg-app: #0b1120;
+  --bg-surface: #11172a;
+  --bg-elevated: #171f36;
+  --text-primary: #f5f7fb;
+  --text-muted: #94a3b8;
+  --text-inverse: #0b1120;
+  --border-subtle: #232c47;
+  --border-strong: #333f63;
+  --accent-primary: #6d6bf9;
+  --accent-primary-hover: #8280fb;
+  --accent-primary-soft: rgba(109, 107, 249, 0.18);
+  --risk-low: #22c55e;
+  --risk-low-soft: rgba(34, 197, 94, 0.16);
+  --risk-medium: #f59e0b;
+  --risk-medium-soft: rgba(245, 158, 11, 0.16);
+  --risk-high: #ef4444;
+  --risk-high-soft: rgba(239, 68, 68, 0.16);
+  --danger: #ef4444;
+  --danger-soft: rgba(239, 68, 68, 0.14);
+  --success: #22c55e;
+  --focus-ring: #8280fb;
+  --shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  --glow-purple: #a78bfa;
+  --glow-blue: #818cf8;
+  --glow-cyan: #22d3ee;
+  --glow-pink: #f472b6;
+  --glow-orange: #fb923c;
+  --glow-teal: #2dd4bf;
+  --marketing-bg-app: #080b16;
+  --marketing-surface: rgba(23, 31, 54, 0.6);
+  --marketing-surface-solid: #11172a;
+  --marketing-border: rgba(129, 140, 248, 0.18);
+  --marketing-border-hover: rgba(167, 139, 250, 0.55);
+  --marketing-glow-opacity: 0.35;
+  --marketing-shadow-card: 0 1px 2px rgba(0, 0, 0, 0.4), 0 12px 32px -12px rgba(0, 0, 0, 0.55);
+  --marketing-shadow-hover: 0 1px 2px rgba(0, 0, 0, 0.4), 0 24px 56px -16px rgba(129, 140, 248, 0.45);
+}
+
+:root[data-theme="light"] {
+  --bg-app: #f6f7fb;
+  --bg-surface: #ffffff;
+  --bg-elevated: #ffffff;
+  --text-primary: #0f172a;
+  --text-muted: #64748b;
+  --text-inverse: #ffffff;
+  --border-subtle: #e2e8f0;
+  --border-strong: #cbd5e1;
+  --accent-primary: #6366f1;
+  --accent-primary-hover: #4f46e5;
+  --accent-primary-soft: rgba(99, 102, 241, 0.1);
+  --risk-low: #16a34a;
+  --risk-low-soft: rgba(22, 163, 74, 0.1);
+  --risk-medium: #d97706;
+  --risk-medium-soft: rgba(217, 119, 6, 0.1);
+  --risk-high: #dc2626;
+  --risk-high-soft: rgba(220, 38, 38, 0.1);
+  --danger: #dc2626;
+  --danger-soft: rgba(220, 38, 38, 0.08);
+  --success: #16a34a;
+  --focus-ring: #6366f1;
+  --shadow-card: 0 1px 2px rgba(15, 23, 42, 0.06);
+  --shadow-elevated: 0 8px 24px rgba(15, 23, 42, 0.12);
+
+  --glow-purple: #8b5cf6;
+  --glow-blue: #6366f1;
+  --glow-cyan: #06b6d4;
+  --glow-pink: #ec4899;
+  --glow-orange: #f97316;
+  --glow-teal: #14b8a6;
+  --marketing-bg-app: #f7f7fd;
+  --marketing-surface: rgba(255, 255, 255, 0.72);
+  --marketing-surface-solid: #ffffff;
+  --marketing-border: rgba(99, 102, 241, 0.14);
+  --marketing-border-hover: rgba(139, 92, 246, 0.4);
+  --marketing-glow-opacity: 0.28;
+  --marketing-shadow-card: 0 1px 2px rgba(76, 29, 149, 0.04), 0 12px 32px -12px rgba(76, 29, 149, 0.14);
+  --marketing-shadow-hover: 0 1px 2px rgba(76, 29, 149, 0.05), 0 20px 48px -16px rgba(99, 102, 241, 0.28);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
