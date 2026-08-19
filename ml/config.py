@@ -106,3 +106,14 @@ ALGORITHM_ANN = "ann"
 # stored verbatim on every model artifact's metadata.json so a later model
 # row can be seeded with `models.risk_thresholds` unchanged.
 RISK_THRESHOLDS = {"low_max": 0.3, "medium_max": 0.6}
+
+# --- SHAP explainability (docs/ML_SPEC.md §13, docs/PROJECT_SPEC.md §15) ---
+
+# Fixed disclaimer text, verbatim from PROJECT_SPEC.md §15. Every SHAP
+# explanation surface (global or local) carries this exact string — never
+# reworded per call site, so the UI's legal/product framing stays consistent
+# regardless of which model or explainer produced the values.
+SHAP_DISCLAIMER = (
+    "This shows what the model learned from patterns in the data — "
+    "it identifies correlation, not proven causation."
+)
