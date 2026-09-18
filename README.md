@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  🌐 <a href="https://churnai.khanova.tech/">Live Application</a> &nbsp;•&nbsp;
+  🌐 <a href="https://churnai.khanova.tech">Live Application</a> &nbsp;•&nbsp;
   💻 <a href="https://github.com/bahawal-khan/churn-ai">GitHub Repository</a>
 </p>
 
@@ -29,7 +29,7 @@ Instead of building only a machine-learning notebook, this project was developed
 
 ## 🚀 Live Application
 
-### 🌐 https://churnai.khanova.tech/
+### 🌐 https://churnai.khanova.tech
 
 ChurnAI is deployed on a Linux VPS with:
 
